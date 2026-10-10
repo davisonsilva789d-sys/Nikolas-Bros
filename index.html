@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Nikolas Bros.: O Mistério de Brasília</title>
+<style>
+:root{--ink:#07111f;--panel:#101e31;--gold:#ffd34e;--cyan:#55e7ef;--green:#36db83;--red:#ff5964}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#030712;color:#f8fafc;font-family:system-ui,Arial,sans-serif}
+body{display:block}
+#game-container{position:relative;width:100vw;height:100vh;height:100dvh;aspect-ratio:auto;overflow:hidden;background:#08152a;border:0;box-shadow:none;flex:none}
+canvas#gameCanvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+.pixel{font-family:monospace;font-weight:900;letter-spacing:1px;text-shadow:2px 2px #000}
+.screen{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:16px;background:linear-gradient(135deg,#06101df2,#0b1c36ed 60%,#10132df5)}
+.hidden{display:none!important}
+.menu-card{position:relative;z-index:1;width:min(94%,680px);max-height:94%;overflow:auto;text-align:center;padding:clamp(14px,3vw,30px);border:3px solid #526783;border-radius:12px;background:linear-gradient(180deg,#142944f5,#071426f8);box-shadow:0 7px 0 #020711,inset 0 0 0 2px #ffffff12}
+h1{font-size:clamp(22px,4.5vw,48px);line-height:1.12;margin:4px 0;color:#ffdc61;text-shadow:4px 4px #9b3d16,6px 6px #000}
+h2{font-size:clamp(12px,2vw,18px);color:var(--cyan);margin:8px 0 12px}
+p{line-height:1.5;color:#d4e0ee;font-size:clamp(11px,1.5vw,14px)}
+.row{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin-top:14px}
+button{border:2px solid #ffffff50;border-radius:8px;padding:11px 14px;font-weight:900;letter-spacing:.4px;color:white;background:#1e4d80;box-shadow:0 4px 0 #050b15;cursor:pointer}
+button:active,button.active{transform:translateY(3px);box-shadow:0 1px 0 #050b15}
+button.primary{background:#1eaa69;color:#04150e;border-color:#87f5bb}
+button.gold{background:#bd7b12;color:#fff2b4}
+button.danger{background:#9e2937}
+button:disabled{opacity:.4;filter:grayscale(1)}
+#hud{position:absolute;z-index:5;top:0;left:0;right:0;display:flex;justify-content:space-between;gap:8px;padding:10px;background:linear-gradient(#020817df,transparent);pointer-events:none}
+.hud-group{display:flex;gap:7px;align-items:flex-start;flex-wrap:wrap}
+.hud-item{padding:7px 9px;border:2px solid #ffffff3a;border-radius:6px;background:#071426e8;font:900 clamp(9px,1.3vw,13px) monospace}
+#pause-btn{pointer-events:auto;padding:7px 10px;background:#a56b0b}
+#touch-controls{position:absolute;z-index:8;left:0;right:0;bottom:max(10px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:flex-end;padding:0 16px;pointer-events:none}
+.pad,.action-pad{display:flex;gap:10px;pointer-events:auto}
+.control{width:clamp(68px,11vw,100px);height:clamp(68px,11vw,100px);padding:0;border:3px solid #a9c0da;background:#10233ddd;border-radius:16px;font-size:clamp(27px,5vw,38px);touch-action:none;box-shadow:0 5px 0 #030914}
+.control small{display:block;font-size:clamp(10px,1.5vw,13px);letter-spacing:0}
+#btn-run{background:#a85d0b;border-color:#ffd17a}
+#btn-jump{border-radius:50%;background:#087c5a;border-color:#8af5c4}
+#cutscene-caption{position:absolute;z-index:25;left:0;right:0;bottom:12%;display:flex;justify-content:center;padding:12px;pointer-events:none}.cutscene-card{max-width:700px;padding:12px 16px;text-align:center;border:3px solid var(--gold);border-radius:10px;background:#06101df2;box-shadow:0 6px 0 #020711;pointer-events:auto}.cutscene-card strong{color:var(--gold);font:900 clamp(11px,2vw,17px) monospace}.cutscene-card p{margin:7px 0;font-size:clamp(10px,1.6vw,14px)}
+#dialog-box{position:absolute;z-index:12;left:14%;right:14%;bottom:16%;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 14px;border:3px solid var(--gold);border-radius:8px;background:#071426f5;box-shadow:0 5px 0 #020711}
+#dialog-speaker{font:900 11px monospace;color:var(--gold)}
+#dialog-text{margin:4px 0 0;font-size:12px}
+#toast{position:absolute;z-index:11;top:24%;left:50%;transform:translateX(-50%);background:#071426f0;border:2px solid var(--cyan);padding:9px 13px;border-radius:7px;font-size:12px;font-weight:800;max-width:85%;text-align:center;pointer-events:none}
+.list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;text-align:left}
+.list button{min-height:70px;text-align:left;background:#132b47}
+.note{font-size:10px;color:#9fb5ce}
+@media (orientation:portrait){#rotate{display:flex}}
+#rotate{display:none;position:absolute;z-index:99;inset:0;background:#030712;align-items:center;justify-content:center;text-align:center;padding:25px}
+@media(max-height:430px){.menu-card{padding:10px;max-height:98%}h1{font-size:22px}.row{margin-top:8px}button{padding:8px 10px}#touch-controls{padding:0 12px}.pad,.action-pad{gap:12px}.control{width:clamp(62px,12vh,82px);height:clamp(62px,12vh,82px);font-size:28px}}
+</style>
+</head>
+<body>
+<div id="game-container">
+<canvas id="gameCanvas" width="960" height="540" aria-label="Jogo de plataforma 2D"></canvas>
+<div id="hud" class="hidden">
+  <div class="hud-group">
+    <div class="hud-item">VIDAS <span id="hud-lives">♥ ♥ ♥</span></div>
+    <div class="hud-item">PTS <span id="hud-score">000000</span></div>
+    <div class="hud-item">PISTAS <span id="hud-clues">0/3</span></div>
+  </div>
+  <div class="hud-group"><div class="hud-item" id="hud-stage">FASE 1</div><button id="pause-btn">Ⅱ PAUSA</button></div>
+</div>
+<div id="touch-controls" class="hidden">
+  <div class="pad"><button class="control" id="btn-left" aria-label="Andar para esquerda">◀<small>ESQ</small></button><button class="control" id="btn-right" aria-label="Andar para direita">▶<small>DIR</small></button></div>
+  <div class="action-pad"><button class="control" id="btn-run">B<small>CORRER</small></button><button class="control" id="btn-jump">A<small>PULAR</small></button></div>
+</div>
+<div id="screen-menu" class="screen">
+  <div class="menu-card">
+    <div style="font-size:clamp(32px,7vw,68px);filter:drop-shadow(4px 5px #000)">🏛️ ⭐ 🕵️</div>
+    <h1>NIKOLAS BROS.</h1><h2>O MISTÉRIO DE BRASÍLIA</h2>
+    <p>Corra, salte, sobreviva às armadilhas e reúna pistas numa aventura de plataforma com sátira política.</p>
+    <div class="row"><button class="primary" id="start-btn">▶ JOGAR</button><button id="stages-btn">🗺 FASES</button><button id="tutorial-btn">CONTROLES</button><button class="gold" id="dossier-btn">📁 DOSSIÊ</button></div>
+    <p class="note">Sátira ficcional. Pistas e documentos inventados do jogo não são provas reais.</p>
+  </div>
+</div>
+<div id="screen-stages" class="screen hidden"><div class="menu-card"><h2>SELEÇÃO DE FASES</h2><div class="list">
+<button data-stage="1">FASE 1<br>Esplanada dos Ministérios</button><button data-stage="2">FASE 2<br>Congresso Nacional</button><button data-stage="3">FASE 3<br>Praça dos Três Poderes</button><button data-stage="4">FASE 4<br>Arquivo de Brasília</button></div><div class="row"><button data-screen="menu">VOLTAR</button></div></div></div>
+<div id="screen-tutorial" class="screen hidden"><div class="menu-card"><h2>COMO JOGAR</h2><p><b>Celular:</b> use ◀ e ▶ para andar, B para correr e A para pular. Segure os botões para manter a ação.</p><p><b>Computador:</b> A/D ou setas para andar; Espaço, W ou ↑ para pular; Shift para correr; Esc para pausar.</p><p>Pise nos inimigos comuns por cima para derrotá-los. Chefes exigem vários saltos certeiros. Colete pistas e moedas, evite espinhos e não caia nos buracos.</p><div class="row"><button data-screen="menu">VOLTAR</button></div></div></div>
+<div id="screen-dossier" class="screen hidden"><div class="menu-card"><h2>📁 DOSSIÊ DE BRASÍLIA</h2><div id="clues-list"><p>Nenhuma pista coletada ainda. Explore as fases para encontrar documentos fictícios.</p></div><p class="note">O enredo é sátira. Alegações, fatos verificados e elementos ficcionais são categorias distintas; o jogo não afirma culpa criminal de pessoas reais.</p><div class="row"><button data-screen="menu">VOLTAR</button></div></div></div>
+<div id="screen-pause" class="screen hidden"><div class="menu-card"><h2>JOGO PAUSADO</h2><div class="row"><button class="primary" id="resume-btn">CONTINUAR</button><button id="restart-btn">REINICIAR FASE</button><button class="danger" data-screen="menu">SAIR AO MENU</button></div></div></div>
+<div id="screen-gameover" class="screen hidden"><div class="menu-card"><h1 style="color:#ff5964">FIM DE JOGO</h1><p>As três vidas acabaram. Tente outra estratégia!</p><div class="row"><button class="primary" id="retry-btn">TENTAR NOVAMENTE</button><button data-screen="menu">MENU</button></div></div></div>
+<div id="screen-victory" class="screen hidden"><div class="menu-card"><div style="font-size:48px">🏆</div><h1>INVESTIGAÇÃO CONCLUÍDA!</h1><p>Você atravessou Brasília e reuniu as pistas do jogo. O arquivo final separa documentos ficcionais de alegações e fatos que precisariam de confirmação independente.</p><div class="row"><button class="primary" data-screen="menu">MENU PRINCIPAL</button><button id="victory-dossier">VER DOSSIÊ</button></div></div></div>
+<div id="dialog-box" class="hidden"><div><span id="dialog-speaker">ARQUIVO</span><p id="dialog-text"></p></div><button id="dialog-next">OK ➜</button></div>
+<div id="cutscene-caption" class="hidden"><div class="cutscene-card"><strong>EPÍLOGO FICTÍCIO — OPERAÇÃO EM BRASÍLIA</strong><p>Na sátira do jogo, agentes da Polícia Federal detêm Nikolas para prestar esclarecimentos. Ao longe, Daniel Vorcaro observa a cena. Isso é uma sequência ficcional, não uma afirmação de culpa ou de acontecimento real.</p><button id="cutscene-finish" class="primary">CONTINUAR ➜</button></div></div>
+<div id="toast" class="hidden"></div>
+<div id="rotate"><div><div style="font-size:50px">📱 ↻</div><h2>GIRE O CELULAR</h2><p>Este jogo foi pensado para a tela horizontal. Gire o aparelho para jogar.</p></div></div>
+</div>
+<script>
+(() => {
+'use strict';
+const canvas=document.getElementById('gameCanvas'),ctx=canvas.getContext('2d');
+const W=960,H=540,GROUND=444;
+const $=id=>document.getElementById(id);
+const screens=['screen-menu','screen-stages','screen-tutorial','screen-dossier','screen-pause','screen-gameover','screen-victory'];
+const stageNames=['','Esplanada dos Ministérios','Congresso Nacional','Praça dos Três Poderes','Arquivo de Brasília'];
+const clueData=[
+ {title:'Pista 1 — Manchetes',desc:'Recortes ficcionais lembram que notícia, suspeita e prova são coisas diferentes.',type:'Elemento ficcional do jogo'},
+ {title:'Pista 2 — Requerimento',desc:'Um requerimento parlamentar pede informações; por si só, não comprova uma acusação.',type:'Explicação geral'},
+ {title:'Pista 3 — Linha do tempo',desc:'A linha do tempo do jogo exige fontes identificáveis antes de tratar uma alegação como fato.',type:'Elemento ficcional do jogo'}
+];
+let state='menu',level=1,score=0,lives=3,clues=new Set(),cameraX=0,frame=0,last=0,toastTimer=0,dialogOpen=false;
+let worldWidth=3600,player,platforms=[],enemies=[],coins=[],particles=[],boss=null,checkpoint=90,finishX=0;
+const input={left:false,right:false,run:false,jump:false,jumpPressed:false};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function setScreen(name){state=name; screens.forEach(id=>$(id).classList.toggle('hidden',id!=='screen-'+name));$('hud').classList.toggle('hidden',name!=='game');$('touch-controls').classList.toggle('hidden',name!=='game');$('dialog-box').classList.add('hidden');if(name!=='cutscene')$('cutscene-caption').classList.add('hidden');dialogOpen=false;clearInput();if(name==='dossier')renderDossier();if(name==='cutscene')$('cutscene-caption').classList.remove('hidden');}
+function clearInput(){input.left=input.right=input.run=input.jump=input.jumpPressed=false;document.querySelectorAll('.control').forEach(b=>b.classList.remove('active'));}
+function showToast(text){$('toast').textContent=text;$('toast').classList.remove('hidden');toastTimer=130;}
+function showDialog(speaker,text){$('dialog-speaker').textContent=speaker;$('dialog-text').textContent=text;$('dialog-box').classList.remove('hidden');dialogOpen=true;}
+function renderDossier(){const el=$('clues-list');el.innerHTML='';if(!clues.size){el.innerHTML='<p>Nenhuma pista coletada ainda. Explore as fases para encontrar documentos fictícios.</p>';return;}[...clues].sort().forEach(id=>{let d=clueData[id-1],box=document.createElement('div');box.style.cssText='text-align:left;background:#0b1b30;border:1px solid #38516e;border-radius:7px;padding:10px;margin:7px 0';box.innerHTML=`<b style="color:#ffdc61">${d.title}</b><p>${d.desc}</p><small style="color:#55e7ef">${d.type}</small>`;el.appendChild(box);});}
+function resetPlayer(){player={x:checkpoint,y:GROUND-49,w:30,h:49,vx:0,vy:0,grounded:false,facing:1,invuln:0,anim:0};}
+function addGroundGaps(gaps){
+ const sorted=[...gaps].sort((a,b)=>a[0]-b[0]);let cursor=0;
+ for(const [a,b] of sorted){
+  const start=clamp(a,cursor,worldWidth),end=clamp(b,start,worldWidth);
+  if(start>cursor)platforms.push({x:cursor,y:GROUND,w:start-cursor,h:H-GROUND,type:'ground'});
+  cursor=Math.max(cursor,end);
+ }
+ if(cursor<worldWidth)platforms.push({x:cursor,y:GROUND,w:worldWidth-cursor,h:H-GROUND,type:'ground'});
+}
+function loadLevel(n){
+ level=n;worldWidth=[0,3600,3900,4100,4300][n];cameraX=0;checkpoint=90;resetPlayer();platforms=[];enemies=[];coins=[];particles=[];boss=null;finishX=worldWidth-90;
+ const gapSets={1:[[720,840],[1540,1660],[2450,2570],[3020,3140]],2:[[620,760],[1280,1420],[2150,2290],[3000,3140]],3:[[580,720],[1220,1360],[2000,2140],[2820,2960]],4:[[500,640],[1060,1200],[1740,1880],[2500,2640],[3280,3420]]};
+ addGroundGaps(gapSets[n]);
+ const addP=(x,y,w=130,moving=false)=>platforms.push({x,y,w,h:20,type:'platform',moving,baseX:x,dir:1,minX:x-55,maxX:x+55});
+ const addCoin=(x,y,type='coin',id=0)=>coins.push({x,y,w:22,h:24,type,id,got:false,bob:Math.random()*6});
+ const addEnemy=(x,y,type='walker',min=x-70,max=x+100)=>enemies.push({x,y,w:type==='drone'?36:32,h:type==='drone'?28:39,type,vx:1.3+level*.18,min,max,alive:true,phase:Math.random()*6,attack:0});
+ if(n===1){
+  [[350,365,130],[520,300,115],[850,365,130],[1040,285,140],[1330,350,130],[1740,300,150],[2050,365,130],[2320,290,150],[2670,350,140],[2880,275,130],[3240,345,150]].forEach(a=>addP(...a));
+  [260,390,550,590,880,920,1060,1100,1360,1400,1770,1810,2090,2350,2390,2710,2920,3280].forEach(x=>addCoin(x,GROUND-70));
+  addCoin(570,252,'clue',1);addEnemy(430,GROUND-39);addEnemy(930,GROUND-39);addEnemy(1430,GROUND-39);addEnemy(1840,GROUND-39,'drone',1770,2020);addEnemy(2740,GROUND-39);
+ } else if(n===2){
+  [[300,370,125],[500,300,115,true],[800,350,140],[1030,260,130],[1450,350,130,true],[1660,290,130],[1940,350,145],[2240,280,130],[2490,340,150,true],[2780,260,140],[3150,330,160],[3450,280,140]].forEach(a=>addP(...a));
+  [330,530,570,830,870,1060,1100,1480,1520,1690,1980,2020,2270,2310,2520,2820,2860,3190,3490].forEach(x=>addCoin(x,GROUND-72));
+  addCoin(840,300,'clue',2);addEnemy(400,GROUND-39,'walker',350,580);addEnemy(900,GROUND-39,'guard',820,1110);addEnemy(1550,GROUND-39,'walker',1470,1780);addEnemy(2050,GROUND-39,'drone',1960,2210);addEnemy(2880,GROUND-39,'guard',2800,3050);addEnemy(3330,GROUND-39);
+ } else if(n===3){
+  [[300,360,140],[510,285,120],[790,350,140,true],[1010,260,140],[1400,350,130],[1600,285,140,true],[1900,340,150],[2180,265,130],[2460,340,150],[2700,270,140,true],[3030,345,150],[3330,285,150],[3650,350,140]].forEach(a=>addP(...a));
+  [330,550,590,830,1050,1090,1430,1630,1930,2210,2490,2730,3070,3370,3690].forEach(x=>addCoin(x,GROUND-72));
+  addCoin(830,310,'clue',3);addEnemy(430,GROUND-39,'guard',350,620);addEnemy(1120,GROUND-39,'drone',1040,1290);addEnemy(1730,GROUND-39,'walker',1600,1870);addEnemy(2350,GROUND-39,'drone',2260,2490);
+  boss={x:3480,y:GROUND-92,w:52,h:92,hp:5,maxHp:5,vx:1.3,min:3370,max:3830,type:'judge',cooldown:0,alive:true};
+ }else{
+  [[260,365,120],[450,290,115,true],[720,350,130],[940,260,130],[1220,350,140,true],[1480,290,140],[1740,345,140],[1990,260,140,true],[2250,340,150],[2500,275,140],[2760,350,140,true],[3000,260,150],[3260,340,150],[3520,280,150],[3800,345,150]].forEach(a=>addP(...a));
+  [290,480,760,980,1260,1520,1780,2030,2290,2540,2800,3040,3300,3560,3840].forEach(x=>addCoin(x,GROUND-75));
+  addEnemy(370,GROUND-39,'guard',300,500);addEnemy(840,GROUND-39,'drone',760,980);addEnemy(1320,GROUND-39,'walker',1240,1450);addEnemy(1830,GROUND-39,'guard',1740,1940);addEnemy(2360,GROUND-39,'drone',2250,2500);addEnemy(2870,GROUND-39,'walker',2760,2990);addEnemy(3330,GROUND-39,'guard',3250,3480);
+  boss={x:3870,y:GROUND-105,w:62,h:105,hp:8,maxHp:8,vx:1.7,min:3750,max:worldWidth-100,type:'master',cooldown:0,alive:true};
+ }
+ normalizeStageObjects();
+ updateHUD();showToast('FASE '+n+' — '+stageNames[n]);
+}
+
+function normalizeStageObjects(){
+ const ground=platforms.filter(p=>p.type==='ground').sort((a,b)=>a.x-b.x);
+ const solids=platforms.filter(p=>p.type==='ground'||p.type==='platform');
+ // Keep each enemy over a real, continuous stretch of ground. Flying enemies may bob,
+ // but their patrol lane can no longer carry them across a pit.
+ for(const e of enemies){
+  let seg=ground.find(p=>e.x+e.w*.5>=p.x&&e.x+e.w*.5<=p.x+p.w);
+  if(!seg)seg=ground.reduce((best,p)=>!best||Math.abs((p.x+p.w/2)-(e.x+e.w/2))<Math.abs((best.x+best.w/2)-(e.x+e.w/2))?p:best,null);
+  if(seg){
+   e.x=clamp(e.x,seg.x+3,Math.max(seg.x+3,seg.x+seg.w-e.w-3));
+   e.min=seg.x+3;e.max=Math.max(e.min,seg.x+seg.w-e.w-3);
+   if(e.type!=='drone')e.y=GROUND-e.h;
+   else e.y=GROUND-105;
+  }
+ }
+ // Regular coins sit just above the nearest safe surface, not buried, inside a pit,
+ // or suspended underneath a platform. Clue coins keep their authored puzzle placement
+ // when there is a platform directly beneath them.
+ for(const c of coins){
+  const center=c.x+c.w/2;
+  const below=solids.filter(p=>center>=p.x-2&&center<=p.x+p.w+2&&p.y>=c.y+c.h-8)
+                    .sort((a,b)=>a.y-b.y)[0];
+  if(below){
+   c.y=below.y-c.h-8;
+  }else{
+   const nearest=solids.reduce((best,p)=>{
+    const dx=center<p.x? p.x-center : center>p.x+p.w?center-(p.x+p.w):0;
+    return !best||dx<best.dx?{p,dx}:best;
+   },null);
+   if(nearest){
+    const p=nearest.p;
+    c.x=clamp(c.x,p.x+2,Math.max(p.x+2,p.x+p.w-c.w-2));
+    c.y=p.y-c.h-8;
+   }
+  }
+ }
+}
+
+function updateHUD(){$('hud-lives').textContent='♥ '.repeat(Math.max(0,lives)).trim()||'0';$('hud-score').textContent=String(score).padStart(6,'0');$('hud-clues').textContent=clues.size+'/3';$('hud-stage').textContent='FASE '+level;}
+function hurt(){
+ if(player.invuln>0||state!=='game')return;lives--;player.invuln=100;player.vy=-5;player.vx=player.facing===1?-3:3;
+ if(lives<=0){setScreen('gameover');return;}
+ // Respawn at last safe checkpoint; preserve the current stage and collected clues.
+ setTimeout(()=>{if(state!=='game')return;player.x=checkpoint;player.y=GROUND-player.h-5;player.vx=0;player.vy=0;cameraX=Math.max(0,checkpoint-220);},180);
+ updateHUD();
+}
+function particlesAt(x,y,color,count=8){for(let i=0;i<count;i++)particles.push({x,y,vx:(Math.random()-.5)*5,vy:-Math.random()*4-1,life:25+Math.random()*15,color,size:2+Math.random()*4});}
+function update(dt){
+ frame++;const step=Math.min(1.8,dt/16.67);
+ if(state!=='game'||dialogOpen)return;
+ player.anim+=step;
+ if(player.invuln>0)player.invuln-=step;
+ const speed=(input.run?5.4:3.55)*step;
+ if(input.left!==input.right){player.vx=input.left?-speed:speed;player.facing=input.left?-1:1;}else player.vx*=Math.pow(.78,step);
+ player.x=clamp(player.x+player.vx,0,worldWidth-player.w);
+ // Moving platforms move on their own path.
+ for(const p of platforms){if(p.moving){p.x+=p.dir*1.15*step;if(p.x<p.minX||p.x>p.maxX){p.dir*=-1;p.x=clamp(p.x,p.minX,p.maxX);}}}
+ const oldBottom=player.y+player.h;
+ player.vy=Math.min(13,player.vy+.48*step);
+ player.y+=player.vy*step;player.grounded=false;
+ // Land only while descending; resolve platform top collisions.
+ for(const p of platforms){
+  if(player.x+player.w>p.x+3&&player.x<p.x+p.w-3&&player.y+player.h>=p.y&&oldBottom<=p.y+Math.max(8,player.vy*step+4)&&player.vy>=0){
+   player.y=p.y-player.h;player.vy=0;player.grounded=true;
+  }
+ }
+ if(input.jumpPressed&&player.grounded){player.vy=-10.6;player.grounded=false;input.jumpPressed=false;beep(360,.07);}
+ if(!input.jump)input.jumpPressed=false;
+ if(player.y>H+70){hurt();player.y=GROUND-player.h-5;}
+ // Enemies: patrol and hover, with faster movement in later stages.
+ for(const e of enemies){if(!e.alive)continue;
+  if(e.type==='drone'){e.x+=Math.sin(frame*.035+e.phase)*.8*step;e.y=GROUND-105+Math.sin(frame*.07+e.phase)*38;}
+  else{e.x+=e.vx*step;if(e.x<e.min||e.x>e.max){e.vx*=-1;e.x=clamp(e.x,e.min,e.max);}}
+  if(overlap(player,e)){
+   const wasAbove=oldBottom<=e.y+12;
+   if(player.vy>0&&wasAbove){e.alive=false;player.vy=-7.2;score+=250;particlesAt(e.x+e.w/2,e.y,'#ffdc61',10);beep(170,.09);}
+   else hurt();
+  }
+ }
+ // Bosses need a short recovery after every stomp: no instant multi-hit exploit.
+ if(boss&&boss.alive){
+  boss.x+=boss.vx*step;if(boss.x<boss.min||boss.x>boss.max){boss.vx*=-1;boss.x=clamp(boss.x,boss.min,boss.max);}
+  boss.cooldown=Math.max(0,boss.cooldown-step);
+  if(overlap(player,boss)){
+   if(player.vy>0&&oldBottom<=boss.y+18&&boss.cooldown===0){
+    boss.hp--;boss.cooldown=42;player.vy=-8.2;score+=350;particlesAt(boss.x+boss.w/2,boss.y,'#ff5964',12);beep(120,.12);
+    if(boss.hp<=0){boss.alive=false;score+=1800;particlesAt(boss.x+boss.w/2,boss.y,'#ffd34e',28);showToast('CHEFE DERROTADO!');}
+   }else if(!(player.invuln>0&&boss.cooldown>0))hurt();
+  }
+ }
+ for(const c of coins){if(c.got)continue;c.bob+=.08*step;if(overlap(player,{x:c.x,y:c.y+Math.sin(c.bob)*4,w:c.w,h:c.h})){
+  c.got=true;if(c.type==='coin'){score+=100;beep(720,.05);particlesAt(c.x,c.y,'#ffdc61',6);}
+  else if(!clues.has(c.id)){clues.add(c.id);score+=500;beep(850,.1);showDialog('PISTA ENCONTRADA',clueData[c.id-1].desc);particlesAt(c.x,c.y,'#55e7ef',14);}
+  updateHUD();
+ }}
+ for(const p of particles){p.x+=p.vx*step;p.y+=p.vy*step;p.vy+=.12*step;p.life-=step;}particles=particles.filter(p=>p.life>0);
+ // Checkpoint flags at key distances.
+ const cp=Math.floor(player.x/850)*850+80;if(cp>checkpoint&&cp<worldWidth-150){checkpoint=cp;showToast('CHECKPOINT ATIVADO');}
+ if(player.x>=finishX-30&&(!boss||!boss.alive)){
+  if(level<4){score+=500;loadLevel(level+1);showDialog('PRÓXIMA FASE','Você avançou. Continue reunindo pistas e cuidado com os novos obstáculos.');}
+  else{score+=1000;updateHUD();setScreen('cutscene');}
+ }
+ cameraX=clamp(player.x-W*.34,0,worldWidth-W);
+ updateHUD();
+}
+function overlap(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
+function beep(freq,dur){try{const ac=beep.ac||(beep.ac=new(window.AudioContext||window.webkitAudioContext)());if(ac.state==='suspended')ac.resume();let o=ac.createOscillator(),g=ac.createGain();o.type='square';o.frequency.value=freq;g.gain.value=.035;o.connect(g);g.connect(ac.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+dur);o.stop(ac.currentTime+dur);}catch(e){}}
+function rect(x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));}
+function drawBackground(){
+ let palettes=[['#172d60','#5ba7e8'],['#111a37','#4566a5'],['#3b4c62','#a0b8c8'],['#080d1a','#293650']][level-1];
+ let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,palettes[0]);g.addColorStop(1,palettes[1]);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ // Sun / moon and pixel clouds
+ ctx.fillStyle=level===4?'#b8d5f0':'#ffe6a0';ctx.fillRect(760,65,36,36);ctx.fillStyle='#ffffff26';ctx.fillRect(766,71,24,24);
+ for(let i=0;i<8;i++){let x=((i*185-cameraX*.18)%(W+220)+W+220)%(W+220)-100,y=55+(i%3)*48;rect(x,y,48,12,'#ffffff25');rect(x+12,y-8,36,12,'#ffffff25');rect(x+34,y+8,30,8,'#ffffff20');}
+ // Layered Brasília skyline / landmark silhouettes.
+ const shift=(cameraX*.25)%600;
+ for(let i=-1;i<3;i++){let x=i*600-shift;
+  rect(x+30,300,78,144,'#172c4a');rect(x+125,275,78,169,'#1a3456');rect(x+220,315,78,129,'#203a5c');rect(x+325,290,60,154,'#1b3554');rect(x+405,320,105,124,'#243f60');
+  for(let bx=x+39;bx<x+103;bx+=17)for(let by=315;by<430;by+=24)rect(bx,by,6,9,'#9cc9dc55');
+  if(level===1){ // Cathedral-like curves and Esplanade
+   ctx.strokeStyle='#d4e9f7a0';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x+405,440);ctx.quadraticCurveTo(x+420,340,x+440,440);ctx.quadraticCurveTo(x+460,340,x+475,440);ctx.stroke();
+  } else if(level===2){ // Congress towers and bowls
+   rect(x+250,240,20,204,'#a6c5d8');rect(x+279,240,20,204,'#a6c5d8');
+   ctx.fillStyle='#b8d2e5';ctx.beginPath();ctx.ellipse(x+235,370,45,15,0,Math.PI,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(x+310,354,45,15,0,0,Math.PI);ctx.fill();
+  } else if(level===3){rect(x+245,335,180,14,'#d9e7f2');for(let k=0;k<5;k++){rect(x+255+k*32,349,8,80,'#b8cedd');}rect(x+248,429,190,12,'#d9e7f2');}
+  else {rect(x+190,215,135,229,'#26384e');for(let k=0;k<5;k++){rect(x+202,230+k*38,110,4,'#89a4bf');}rect(x+338,250,50,194,'#1c2b40');}
+ }
+ // Ground horizon lawn / road
+ rect(0,420,W,30,level===4?'#252d3b':'#426c51');rect(0,438,W,102,'#172c32');
+ for(let x=0;x<W;x+=26){let wx=x+(cameraX%26);rect(x,438,12,4,'#73ad67');rect(x+12,456,8,3,'#d8cda0');}
+}
+function drawPlatform(p){
+ const x=p.x-cameraX;if(x+p.w<-5||x>W+5)return;
+ if(p.type==='ground'){
+  rect(x,p.y,p.w,p.h,'#583c2c');rect(x,p.y,p.w,8,'#47b34e');rect(x,p.y+8,p.w,5,'#24783e');
+  for(let xx=0;xx<p.w;xx+=20){rect(x+xx,p.y+20,2,Math.max(0,p.h-20),'#8d6040');rect(x+xx+8,p.y+25,5,4,'#372d2b');rect(x+xx+3,p.y+46,8,3,'#a36d45');}
+ }else{
+  rect(x,p.y+4,p.w,p.h,'#70432a');rect(x,p.y,p.w,6,'#f2b84b');rect(x,p.y+6,p.w,4,'#b8732d');
+  for(let xx=8;xx<p.w;xx+=24){rect(x+xx,p.y+11,10,5,'#8f552b');rect(x+xx+10,p.y+7,3,4,'#f7ce73');}
+  if(p.moving){rect(x+p.w/2-9,p.y-4,18,4,'#65d9e9');}
+ }
+}
+function drawCoin(c){let x=c.x-cameraX,y=c.y+Math.sin(c.bob)*4;if(x<-30||x>W+30)return;
+ if(c.type==='coin'){ctx.fillStyle='#ffcc31';ctx.beginPath();ctx.ellipse(x+11,y+12,7,11,0,0,Math.PI*2);ctx.fill();rect(x+8,y+4,4,15,'#fff0a2');rect(x+4,y+10,3,5,'#b9780a');}
+ else{rect(x,y,22,24,'#20b9d0');rect(x+4,y+4,14,16,'#d8ffff');rect(x+7,y+7,8,10,'#14667d');rect(x+9,y+9,4,6,'#ffdf64');}
+}
+function drawPlayer(){
+ if(player.invuln>0&&Math.floor(frame/5)%2===0)return;
+ const x=Math.round(player.x-cameraX),y=Math.round(player.y),f=player.facing;
+ ctx.save();ctx.translate(x+(f===-1?player.w:0),y);ctx.scale(f,1);
+ // Drop shadow
+ rect(3,player.h-2,25,4,'#0007');
+ // Legs animate when moving
+ let walk=Math.abs(player.vx)>.6&&player.grounded?Math.sin(player.anim*.9)*3:0;
+ rect(6,35,8,11,'#111a2d');rect(17,35,8,11,'#111a2d');
+ rect(5,43+walk,10,5,'#101827');rect(17,43-walk,10,5,'#101827');
+ // jacket, lapels, shirt, tie
+ rect(3,20,25,18,'#203f91');rect(11,20,9,15,'#f4f3e8');rect(13,22,5,12,'#d52d3b');
+ rect(5,23,5,12,'#315cc1');rect(22,23,4,12,'#315cc1');rect(7,31,17,3,'#13295d');
+ // neck and face
+ rect(12,16,8,6,'#d89b6d');rect(6,3,21,16,'#e8b187');
+ // hair silhouette and fringe, directional nose at right
+ rect(4,1,24,7,'#4b281e');rect(4,4,5,8,'#4b281e');rect(18,2,9,4,'#653624');
+ rect(8,9,5,2,'#5a3024');rect(21,9,3,2,'#20222c');rect(26,11,3,3,'#d89b6d');
+ // olhos sem óculos
+ rect(10,9,3,3,'#20222c');rect(21,9,3,3,'#20222c');
+ // jacket badge
+ rect(7,25,3,3,'#f5d45d');
+ ctx.restore();
+}
+function drawEnemy(e){
+ const x=Math.round(e.x-cameraX),y=Math.round(e.y);if(x<-60||x>W+60)return;
+ if(e.type==='drone'){
+  // Drone support unit remains a mechanical hazard; human enemies are Federal Police.
+  rect(x+4,y+8,28,15,'#26394d');rect(x,y+4,10,5,'#b7c9d8');rect(x+26,y+4,10,5,'#b7c9d8');rect(x+10,y+12,5,5,frame%30<15?'#ff465b':'#ffbd45');rect(x+22,y+12,5,5,'#ff465b');rect(x+13,y+22,10,3,'#182537');
+ }else{
+  // Navy tactical uniform, cap, vest and legible PF marking.
+  rect(x+5,y+35,9,5,'#111a29');rect(x+19,y+35,9,5,'#111a29');
+  rect(x+7,y+37,7,3,'#242b38');rect(x+20,y+37,7,3,'#242b38');
+  rect(x+3,y+10,28,26,'#173a63');rect(x+1,y+16,6,17,'#214b77');rect(x+27,y+16,6,17,'#214b77');
+  rect(x+7,y,20,15,'#c98e68');rect(x+4,y-4,26,7,'#0a1a2b');rect(x+8,y-7,18,4,'#d9e4ef');
+  // Face and eyes, no eyewear.
+  rect(x+10,y+6,3,3,'#111827');rect(x+21,y+6,3,3,'#111827');rect(x+15,y+11,6,2,'#784634');
+  // Protective vest and shoulder patches.
+  rect(x+6,y+15,22,19,'#102943');rect(x+8,y+17,18,14,'#315878');
+  rect(x+8,y+18,6,5,'#f2f5f8');rect(x+15,y+18,11,6,'#f5f7fb');
+  ctx.fillStyle='#123b68';ctx.font='bold 6px monospace';ctx.textAlign='center';ctx.fillText('PF',20+x,y+23);
+  rect(x+3,y+17,4,6,'#f2f5f8');rect(x+27,y+17,4,6,'#f2f5f8');
+  rect(x+4,y+25,5,5,'#d6b24e');rect(x+25,y+25,5,5,'#d6b24e');
+  rect(x+14,y+31,7,3,'#d4e2ee');rect(x+15,y+32,5,2,'#14283e');
+ }
+}
+function drawBoss(){
+ if(!boss||!boss.alive)return;let x=boss.x-cameraX,y=boss.y;
+ if(boss.type==='judge'){
+  rect(x+5,y+18,42,69,'#252c3d');rect(x+1,y+23,50,8,'#59667b');rect(x+8,y,36,24,'#e0b08b');rect(x+5,y-3,42,9,'#e7eaf0');rect(x+12,y+8,9,5,'#172033');rect(x+31,y+8,9,5,'#172033');rect(x+21,y+12,8,3,'#8d4c40');rect(x+13,y+28,26,12,'#f1f4f6');rect(x+22,y+28,8,17,'#9f2435');
+ }else{
+  rect(x,y+14,boss.w,boss.h-14,'#6c2445');rect(x+4,y+4,boss.w-8,23,'#e2b38e');rect(x-3,y,boss.w+6,9,'#d5b76a');rect(x+11,y+11,10,5,'#171827');rect(x+39,y+11,10,5,'#171827');rect(x+25,y+16,10,4,'#9c354b');rect(x+12,y+35,38,8,'#a84463');rect(x+10,y+boss.h-8,16,8,'#111827');rect(x+38,y+boss.h-8,16,8,'#111827');
+ }
+ rect(x-2,y-20,boss.w+4,8,'#030712');rect(x,y-18,(boss.w)*(boss.hp/boss.maxHp),4,'#ff4c61');rect(x,y-18,boss.w,2,'#ffd6d9');
+ if(boss.cooldown>0&&Math.floor(frame/4)%2===0){ctx.strokeStyle='#fff3';ctx.strokeRect(x-4,y-4,boss.w+8,boss.h+8);}
+}
+
+function drawCutscene(){
+ const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#121a32');g.addColorStop(.68,'#52617b');g.addColorStop(1,'#171e2c');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ // Brasília buildings and distant lights
+ rect(0,350,W,190,'#202b3a');rect(80,210,120,140,'#2a3b51');rect(95,230,90,8,'#8095ad');rect(110,255,60,7,'#8095ad');
+ rect(720,190,145,160,'#26384e');rect(740,210,105,8,'#8396aa');rect(760,235,65,8,'#8396aa');
+ for(let i=0;i<12;i++)rect(35+i*78,385+(i%3)*18,28,3,'#d3c17b');
+ // Federal Police vehicle in the background
+ rect(85,320,180,58,'#152437');rect(105,300,120,25,'#243d59');rect(130,306,30,12,'#c8e5f7');rect(171,306,30,12,'#c8e5f7');
+ rect(108,369,33,23,'#090f19');rect(213,369,33,23,'#090f19');rect(132,330,65,13,'#f1f5f9');ctx.fillStyle='#183a60';ctx.font='bold 12px monospace';ctx.textAlign='center';ctx.fillText('POLÍCIA FEDERAL',164,340);
+ rect(123,298,27,5,'#e94450');rect(184,298,27,5,'#4f9cff');
+ // Nikolas in the center, no glasses, with hands held forward as a stylized arrest scene.
+ function person(px,py,scale,kind){
+  ctx.save();ctx.translate(px,py);ctx.scale(scale,scale);
+  const skin='#dba27b',hair='#4b281e';
+  rect(5,34,12,23,'#172b4e');rect(22,34,12,23,'#172b4e');rect(4,55,15,5,'#111827');rect(21,55,15,5,'#111827');
+  if(kind==='nikolas'){
+   rect(3,14,32,25,'#244a91');rect(15,14,9,23,'#f3f1e6');rect(17,17,5,17,'#cf2d3d');
+  }else if(kind==='pf'){
+   rect(3,14,32,25,'#173a63');rect(6,17,26,19,'#315878');rect(10,20,18,8,'#f5f7fb');ctx.fillStyle='#123b68';ctx.font='bold 8px monospace';ctx.textAlign='center';ctx.fillText('PF',20,27);
+  }else{
+   rect(3,14,32,25,'#222936');rect(8,18,22,14,'#111827');ctx.fillStyle='#fff';ctx.font='bold 8px monospace';ctx.textAlign='center';ctx.fillText('M',19,28);
+  }
+  rect(14,9,9,8,skin);rect(7,0,23,16,skin);rect(5,-3,26,7,kind==='pf'?'#0a1a2b':hair);rect(7,-5,22,4,kind==='pf'?'#dce6f0':hair);
+  rect(12,6,3,3,'#20222c');rect(23,6,3,3,'#20222c');rect(18,11,5,2,'#8e4c3c');
+  if(kind==='pf'){rect(0,18,6,6,'#e9eef4');rect(31,18,6,6,'#e9eef4');}
+  if(kind==='nikolas'){rect(27,25,13,4,skin);rect(35,24,4,6,skin);rect(27,29,12,4,skin);rect(34,28,4,6,skin);}
+  ctx.restore();
+ }
+ // Two PF agents escorting Nikolas; Daniel Vorcaro stands apart at right, with Master "M" on suit.
+ person(380,300,2.0,'pf');person(475,300,2.0,'nikolas');person(570,300,2.0,'pf');
+ person(790,322,1.55,'vorcaro');
+ rect(745,410,115,3,'#a8b6c7');rect(752,418,100,2,'#a8b6c755');
+ ctx.fillStyle='#d9e6f3';ctx.font='bold 15px monospace';ctx.textAlign='center';ctx.fillText('BRASÍLIA • EPÍLOGO FICTÍCIO',480,70);
+ ctx.font='12px monospace';ctx.fillStyle='#f7d96b';ctx.fillText('NENHUMA CENA REPRESENTA UM FATO REAL',480,94);
+}
+function render(){
+ ctx.clearRect(0,0,W,H);if(state==='cutscene'){drawCutscene();return;}drawBackground();
+ for(const p of platforms)drawPlatform(p);
+ for(const c of coins)if(!c.got)drawCoin(c);
+ for(const e of enemies)if(e.alive)drawEnemy(e);
+ drawBoss();drawPlayer();
+ for(const p of particles){ctx.globalAlpha=clamp(p.life/25,0,1);rect(p.x-cameraX,p.y,p.size,p.size,p.color);}ctx.globalAlpha=1;
+ // Finish flag
+ const fx=finishX-cameraX;if(fx>-20&&fx<W+20){rect(fx,GROUND-100,5,100,'#e4e9ef');rect(fx+5,GROUND-100,43,25,'#f6cf45');rect(fx+5,GROUND-75,30,6,'#2a9e63');}
+ // Spikes fill every dangerous gap edge; visual spikes are also placed on ground in later levels.
+ for(let i=0;i<platforms.length;i++){let p=platforms[i];if(p.type==='ground'&&p.x-cameraX>W+30)continue;}
+}
+function loop(now){let dt=last?now-last:16.67;last=now;if(state==='game')update(dt);render();requestAnimationFrame(loop);}
+function start(n=1){score=n===1?0:score;lives=3;clues=new Set();loadLevel(n);setScreen('game');}
+function setInput(key,on){if(key==='jump'){if(on&&!input.jump)input.jumpPressed=true;input.jump=on;}else input[key]=on;}
+function bindButton(id,key){const el=$(id);let held=false;const down=e=>{e.preventDefault();held=true;setInput(key,true);el.classList.add('active');try{el.setPointerCapture(e.pointerId)}catch(_){}};
+ const up=e=>{if(!held)return;held=false;setInput(key,false);el.classList.remove('active');};
+ el.addEventListener('pointerdown',down);el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);el.addEventListener('lostpointercapture',up);el.addEventListener('contextmenu',e=>e.preventDefault());}
+bindButton('btn-left','left');bindButton('btn-right','right');bindButton('btn-run','run');bindButton('btn-jump','jump');
+window.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowUp','Space'].includes(e.code))e.preventDefault();if(e.code==='ArrowLeft'||e.code==='KeyA')input.left=true;if(e.code==='ArrowRight'||e.code==='KeyD')input.right=true;if(e.code==='ShiftLeft'||e.code==='ShiftRight'||e.code==='KeyK')input.run=true;if(['ArrowUp','KeyW','Space'].includes(e.code)){if(!input.jump)input.jumpPressed=true;input.jump=true;}if(e.code==='Escape'&&state==='game')setScreen('pause');},{passive:false});
+window.addEventListener('keyup',e=>{if(e.code==='ArrowLeft'||e.code==='KeyA')input.left=false;if(e.code==='ArrowRight'||e.code==='KeyD')input.right=false;if(e.code==='ShiftLeft'||e.code==='ShiftRight'||e.code==='KeyK')input.run=false;if(['ArrowUp','KeyW','Space'].includes(e.code))input.jump=false;});
+window.addEventListener('blur',clearInput);
+$('start-btn').onclick=()=>start(1);$('stages-btn').onclick=()=>setScreen('stages');$('tutorial-btn').onclick=()=>setScreen('tutorial');$('dossier-btn').onclick=()=>setScreen('dossier');
+document.querySelectorAll('[data-screen]').forEach(b=>b.onclick=()=>setScreen(b.dataset.screen));
+document.querySelectorAll('[data-stage]').forEach(b=>b.onclick=()=>start(Number(b.dataset.stage)));
+$('pause-btn').onclick=()=>setScreen('pause');$('resume-btn').onclick=()=>setScreen('game');$('restart-btn').onclick=()=>{loadLevel(level);setScreen('game');};
+$('retry-btn').onclick=()=>start(1);$('victory-dossier').onclick=()=>setScreen('dossier');$('cutscene-finish').onclick=()=>setScreen('victory');
+$('dialog-next').onclick=()=>{$('dialog-box').classList.add('hidden');dialogOpen=false;};
+$('dialog-box').addEventListener('pointerdown',e=>{if(e.target.id!=='dialog-next')return;});
+resetPlayer();requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
